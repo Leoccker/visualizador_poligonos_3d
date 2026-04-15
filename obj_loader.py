@@ -12,33 +12,56 @@ class ObjLoader:
         mesh = Mesh(source_path=obj_path)
         current_material = None
         mtllibs = []
+        uvs = []
+        normals = []
 
-        with open(obj_path, "r", encoding="utf-8", errors="ignore") as handle:
-            for raw_line in handle:
-                line = raw_line.strip()
-                if not line or line.startswith("#"):
-                    continue
+        try:
+            with open(obj_path, "r", encoding="utf-8-sig") as handle:
+                for line_number, raw_line in enumerate(handle, start=1):
+                    line = raw_line.strip()
+                    if not line or line.startswith("#"):
+                        continue
 
-                parts = line.split()
-                keyword = parts[0]
-                values = parts[1:]
+                    parts = line.split()
+                    keyword = parts[0]
+                    values = parts[1:]
 
-                if keyword == "v" and len(values) >= 3:
-                    mesh.vertices.append(tuple(float(value) for value in values[:3]))
-                elif keyword == "vn" and len(values) >= 3:
-                    mesh.normals.append(vec_normalize(tuple(float(value) for value in values[:3])))
-                elif keyword == "vt" and len(values) >= 2:
-                    mesh.uvs.append((float(values[0]), float(values[1])))
-                elif keyword == "f" and len(values) >= 3:
-                    face_items = [self._parse_face_vertex(item, mesh) for item in values]
-                    for tri in self._triangulate(face_items, current_material):
-                        mesh.triangles.append(tri)
-                elif keyword == "mtllib":
-                    mtllibs.extend(values)
-                elif keyword == "usemtl":
-                    current_material = values[0] if values else None
-                elif keyword == "g":
-                    continue
+                    try:
+                        if keyword == "v":
+                            mesh.vertices.append(self._parse_components(values, 3, "vertex"))
+                        elif keyword == "vn":
+                            normals.append(
+                                vec_normalize(self._parse_components(values, 3, "normal"))
+                            )
+                        elif keyword == "vt":
+                            uvs.append(self._parse_components(values, 2, "texture coordinate"))
+                        elif keyword == "f":
+                            if len(values) < 3:
+                                raise ValueError("face requires at least 3 vertices")
+                            face_vertices = [
+                                self._parse_face_vertex(
+                                    item,
+                                    len(mesh.vertices),
+                                    len(uvs),
+                                    len(normals),
+                                )
+                                for item in values
+                            ]
+                            mesh.triangles.extend(
+                                self._triangulate(face_vertices, current_material)
+                            )
+                        elif keyword == "mtllib":
+                            mtllibs.extend(values)
+                        elif keyword == "usemtl":
+                            current_material = values[0] if values else None
+                        elif keyword == "g":
+                            continue
+                    except ValueError as exc:
+                        raise ValueError(
+                            f"{os.path.basename(obj_path)}:{line_number}: {exc}"
+                        ) from exc
+        except UnicodeDecodeError as exc:
+            raise ValueError(f"{os.path.basename(obj_path)}: invalid UTF-8 data") from exc
 
         for mtllib in mtllibs:
             mtl_path = os.path.join(os.path.dirname(obj_path), mtllib)
@@ -50,26 +73,43 @@ class ObjLoader:
         mesh.euler_stats = self._compute_euler_stats(mesh)
         return mesh
 
-    def _parse_face_vertex(self, token, mesh):
+    def _parse_components(self, values, count, label):
+        if len(values) < count:
+            raise ValueError(f"{label} requires at least {count} components")
+        try:
+            return tuple(float(value) for value in values[:count])
+        except ValueError as exc:
+            raise ValueError(f"invalid {label} value") from exc
+
+    def _parse_face_vertex(self, token, vertex_count, uv_count, normal_count):
         items = token.split("/")
-        vertex_index = self._resolve_index(items[0], len(mesh.vertices))
-        uv_index = None
-        normal_index = None
+        if len(items) > 3 or not items[0]:
+            raise ValueError(f"invalid face vertex '{token}'")
+
+        vertex_index = self._resolve_index(items[0], vertex_count, "vertex")
 
         if len(items) >= 2 and items[1] != "":
-            uv_index = self._resolve_index(items[1], len(mesh.uvs))
+            self._resolve_index(items[1], uv_count, "texture coordinate")
         if len(items) >= 3 and items[2] != "":
-            normal_index = self._resolve_index(items[2], len(mesh.normals))
+            self._resolve_index(items[2], normal_count, "normal")
 
-        return vertex_index, uv_index, normal_index
+        return vertex_index
 
-    def _resolve_index(self, token, size):
-        value = int(token)
-        if value > 0:
-            return value - 1
-        if value < 0:
-            return size + value
-        raise ValueError("OBJ index cannot be zero")
+    def _resolve_index(self, token, size, label):
+        try:
+            value = int(token)
+        except ValueError as exc:
+            raise ValueError(f"invalid {label} index '{token}'") from exc
+
+        if value == 0:
+            raise ValueError(f"{label} index cannot be zero")
+        if size == 0:
+            raise ValueError(f"{label} index {value} references an empty {label} list")
+
+        index = value - 1 if value > 0 else size + value
+        if not 0 <= index < size:
+            raise ValueError(f"{label} index {value} out of range for {size} entries")
+        return index
 
     def _triangulate(self, face_items, material_name):
         base = face_items[0]
@@ -79,9 +119,7 @@ class ObjLoader:
             third = face_items[index + 1]
             triangles.append(
                 Triangle(
-                    vertex_indices=(base[0], second[0], third[0]),
-                    uv_indices=(base[1], second[1], third[1]),
-                    normal_indices=(base[2], second[2], third[2]),
+                    vertex_indices=(base, second, third),
                     material_name=material_name,
                 )
             )
@@ -91,21 +129,29 @@ class ObjLoader:
         materials = {}
         current = None
 
-        with open(mtl_path, "r", encoding="utf-8", errors="ignore") as handle:
-            for raw_line in handle:
-                line = raw_line.strip()
-                if not line or line.startswith("#"):
-                    continue
+        try:
+            with open(mtl_path, "r", encoding="utf-8-sig") as handle:
+                for line_number, raw_line in enumerate(handle, start=1):
+                    line = raw_line.strip()
+                    if not line or line.startswith("#"):
+                        continue
 
-                parts = line.split()
-                keyword = parts[0]
-                values = parts[1:]
+                    parts = line.split()
+                    keyword = parts[0]
+                    values = parts[1:]
 
-                if keyword == "newmtl" and values:
-                    current = Material(values[0])
-                    materials[current.name] = current
-                elif keyword == "Kd" and current and len(values) >= 3:
-                    current.kd = tuple(float(value) for value in values[:3])
+                    try:
+                        if keyword == "newmtl" and values:
+                            current = Material(values[0])
+                            materials[current.name] = current
+                        elif keyword == "Kd" and current:
+                            current.kd = self._parse_components(values, 3, "diffuse color")
+                    except ValueError as exc:
+                        raise ValueError(
+                            f"{os.path.basename(mtl_path)}:{line_number}: {exc}"
+                        ) from exc
+        except UnicodeDecodeError as exc:
+            raise ValueError(f"{os.path.basename(mtl_path)}: invalid UTF-8 data") from exc
 
         return materials
 

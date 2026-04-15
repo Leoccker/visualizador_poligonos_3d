@@ -3,7 +3,14 @@ import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
-from constants import BACKGROUND, WIRE_COLOR, HUD_COLOR, LIGHT_DIRECTION
+from constants import (
+    BACKGROUND,
+    WIRE_COLOR,
+    HUD_COLOR,
+    LIGHT_DIRECTION,
+    WINDOW_WIDTH,
+    WINDOW_HEIGHT,
+)
 from math_utils import (
     vec_dot, vec_scale, vec_normalize,
     kd_to_rgb, apply_shading, rgb_to_hex,
@@ -16,6 +23,8 @@ from viewer_state import ViewerState
 
 
 class ViewerApp:
+    DEFAULT_STATUS = "Abra um arquivo .obj para iniciar"
+
     def __init__(self, root):
         self.root = root
         self.root.title("Visualizador 3D de Poligonos OBJ/MTL")
@@ -26,11 +35,15 @@ class ViewerApp:
         self.drag_anchor = None
 
         self.canvas = tk.Canvas(
-            root, width=1280, height=800, bg=BACKGROUND, highlightthickness=0
+            root,
+            width=WINDOW_WIDTH,
+            height=WINDOW_HEIGHT,
+            bg=BACKGROUND,
+            highlightthickness=0,
         )
         self.canvas.pack(fill="both", expand=True)
 
-        self.status_var = tk.StringVar(value="Abra um arquivo .obj para iniciar")
+        self.status_var = tk.StringVar(value=self.DEFAULT_STATUS)
         self.info_var = tk.StringVar(value="")
 
         controls = tk.Frame(root, bg=BACKGROUND)
@@ -65,16 +78,32 @@ class ViewerApp:
             return
 
         try:
-            self.mesh = self.loader.load(path)
-            self.state.reset()
-            stats = self.mesh.euler_stats
-            self.status_var.set(f"Modelo carregado: {os.path.basename(path)}")
-            self.info_var.set(
-                f"V={stats['V']}  E={stats['E']}  F={stats['F']}  Euler={stats['Euler']} ({stats['status']})"
-            )
+            mesh = self.loader.load(path)
+        except (OSError, ValueError) as exc:
+            self._clear_loaded_mesh(f"Falha ao carregar: {os.path.basename(path)}")
             self.draw()
-        except Exception as exc:
             messagebox.showerror("Erro ao carregar OBJ", str(exc))
+            return
+
+        self._set_loaded_mesh(mesh, path)
+        self.draw()
+
+    def _set_loaded_mesh(self, mesh, path):
+        self.mesh = mesh
+        self.drag_anchor = None
+        self.state.reset()
+        stats = self.mesh.euler_stats
+        self.status_var.set(f"Modelo carregado: {os.path.basename(path)}")
+        self.info_var.set(
+            f"V={stats['V']}  E={stats['E']}  F={stats['F']}  Euler={stats['Euler']} ({stats['status']})"
+        )
+
+    def _clear_loaded_mesh(self, status_message):
+        self.mesh = None
+        self.drag_anchor = None
+        self.state.reset()
+        self.status_var.set(status_message or self.DEFAULT_STATUS)
+        self.info_var.set("")
 
     # ------------------------------------------------------------------
     # Event handlers
@@ -194,7 +223,8 @@ class ViewerApp:
                 }
             )
 
-        render_triangles.sort(key=lambda item: item["depth"])
+        # Painter's algorithm needs far geometry first because the canvas has no z-buffer.
+        render_triangles.sort(key=lambda item: item["depth"], reverse=True)
         return render_triangles
 
     def draw(self):
