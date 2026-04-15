@@ -2,6 +2,7 @@ import math
 import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from typing import NamedTuple
 
 from constants import (
     BACKGROUND,
@@ -10,6 +11,11 @@ from constants import (
     LIGHT_DIRECTION,
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
+    CAMERA_DISTANCE,
+    PERSPECTIVE_FOV,
+    NEAR_PLANE,
+    ISO_SCALE_FACTOR,
+    MOUSE_SENSITIVITY,
 )
 from math_utils import (
     vec_dot, vec_scale, vec_normalize,
@@ -18,8 +24,17 @@ from math_utils import (
     rotation_x, rotation_y,
     normal_matrix, mat3_vec_mul,
 )
+from models import Triangle
 from obj_loader import ObjLoader
 from viewer_state import ViewerState
+
+
+class RenderTriangle(NamedTuple):
+    """Pre-processed triangle ready for 2-D projection and drawing."""
+    triangle: Triangle
+    points_3d: tuple[tuple[float, float, float], ...]
+    normal: tuple[float, float, float]
+    depth: float
 
 
 class ViewerApp:
@@ -120,8 +135,8 @@ class ViewerApp:
             return
         dx = event.x - self.drag_anchor[0]
         dy = event.y - self.drag_anchor[1]
-        self.state.rotation[1] += dx * 0.01
-        self.state.rotation[0] += dy * 0.01
+        self.state.rotation[1] += dx * MOUSE_SENSITIVITY
+        self.state.rotation[0] += dy * MOUSE_SENSITIVITY
         self.drag_anchor = (event.x, event.y)
         self.draw()
 
@@ -166,18 +181,19 @@ class ViewerApp:
 
     def _get_view_matrix(self):
         if self.state.projection == "isometric":
-            return mat_mul(rotation_y(math.radians(45)), rotation_x(math.radians(-35.264)))
+            # Standard isometric: rotate Y first (turn 45°), then tilt X down.
+            # mat_mul(A, B) applies B first, so Y rotation goes on the right.
+            return mat_mul(rotation_x(math.radians(-35.264)), rotation_y(math.radians(45)))
         return identity_matrix()
 
     def _project_point(self, point, canvas_width, canvas_height):
         if self.state.projection == "perspective":
-            camera_z = 4.0
-            z = point[2] + camera_z
-            if z <= 0.05:
+            z = point[2] + CAMERA_DISTANCE
+            if z <= NEAR_PLANE:
                 return None
-            factor = 480 / z
+            factor = PERSPECTIVE_FOV / z
         else:
-            factor = min(canvas_width, canvas_height) * 0.33
+            factor = min(canvas_width, canvas_height) * ISO_SCALE_FACTOR
 
         x = canvas_width / 2 + point[0] * factor
         y = canvas_height / 2 - point[1] * factor
@@ -190,7 +206,7 @@ class ViewerApp:
         base_rgb = kd_to_rgb(material.kd if material else (0.75, 0.78, 0.84))
         return apply_shading(base_rgb, intensity)
 
-    def _build_render_data(self):
+    def _build_render_data(self) -> list[RenderTriangle]:
         if not self.mesh:
             return []
 
@@ -203,7 +219,7 @@ class ViewerApp:
             camera = mat_vec_mul(view, (world[0], world[1], world[2]))
             transformed_vertices.append((camera[0], camera[1], camera[2]))
 
-        render_triangles = []
+        render_triangles: list[RenderTriangle] = []
         for triangle in self.mesh.triangles:
             v0 = transformed_vertices[triangle.vertex_indices[0]]
             v1 = transformed_vertices[triangle.vertex_indices[1]]
@@ -215,16 +231,17 @@ class ViewerApp:
 
             depth = (v0[2] + v1[2] + v2[2]) / 3.0
             render_triangles.append(
-                {
-                    "triangle": triangle,
-                    "points_3d": (v0, v1, v2),
-                    "normal": transformed_normal,
-                    "depth": depth,
-                }
+                RenderTriangle(
+                    triangle=triangle,
+                    points_3d=(v0, v1, v2),
+                    normal=transformed_normal,
+                    depth=depth,
+                )
             )
 
-        # Painter's algorithm needs far geometry first because the canvas has no z-buffer.
-        render_triangles.sort(key=lambda item: item["depth"], reverse=True)
+        # Painter's algorithm: draw far geometry first (ascending depth) so
+        # that nearer faces paint over them.
+        render_triangles.sort(key=lambda item: item.depth)
         return render_triangles
 
     def draw(self):
@@ -246,7 +263,7 @@ class ViewerApp:
         for item in self._build_render_data():
             points_2d = []
             clipped = False
-            for point in item["points_3d"]:
+            for point in item.points_3d:
                 projected = self._project_point(point, width, height)
                 if projected is None:
                     clipped = True
@@ -256,11 +273,11 @@ class ViewerApp:
             if clipped:
                 continue
 
-            triangle = item["triangle"]
+            triangle = item.triangle
             if self.state.render_mode in {"solid", "both"}:
                 self.canvas.create_polygon(
                     points_2d,
-                    fill=self._triangle_color(triangle, item["normal"]),
+                    fill=self._triangle_color(triangle, item.normal),
                     outline="",
                 )
 

@@ -64,8 +64,8 @@ class ViewerAppTests(unittest.TestCase):
 
         render_data = app._build_render_data()
 
-        self.assertEqual([item["triangle"].vertex_indices for item in render_data], [(0, 1, 2), (3, 4, 5)])
-        self.assertEqual([item["depth"] for item in render_data], [1.0, -2.0])
+        self.assertEqual([item.triangle.vertex_indices for item in render_data], [(3, 4, 5), (0, 1, 2)])
+        self.assertEqual([item.depth for item in render_data], [-2.0, 1.0])
 
     def test_open_obj_clears_stale_mesh_state_after_load_failure(self):
         app = self._make_app()
