@@ -78,7 +78,7 @@ def kd_to_rgb(kd: Vec3) -> tuple[int, int, int]:
 
 
 def apply_shading(base_rgb: tuple[int, ...], intensity: float) -> str:
-    ambient = 0.18
+    ambient = 0.35
     shade = clamp(ambient + (1.0 - ambient) * intensity, 0.0, 1.0)
     return rgb_to_hex(tuple(channel * shade for channel in base_rgb))
 
