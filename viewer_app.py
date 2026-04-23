@@ -6,23 +6,31 @@ from typing import NamedTuple
 
 from constants import (
     BACKGROUND,
-    WIRE_COLOR,
-    HUD_COLOR,
-    LIGHT_DIRECTION,
-    WINDOW_WIDTH,
-    WINDOW_HEIGHT,
     CAMERA_DISTANCE,
-    PERSPECTIVE_FOV,
-    NEAR_PLANE,
+    HUD_COLOR,
     ISO_SCALE_FACTOR,
+    LIGHT_DIRECTION,
     MOUSE_SENSITIVITY,
+    NEAR_PLANE,
+    PERSPECTIVE_FOV,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
+    WIRE_COLOR,
 )
 from math_utils import (
-    vec_dot, vec_scale, vec_normalize,
-    kd_to_rgb, apply_shading, rgb_to_hex,
-    identity_matrix, mat_mul, mat_vec_mul,
-    rotation_x, rotation_y,
-    normal_matrix, mat3_vec_mul,
+    apply_shading,
+    identity_matrix,
+    kd_to_rgb,
+    mat3_vec_mul,
+    mat_mul,
+    mat_vec_mul,
+    normal_matrix,
+    rgb_to_hex,
+    rotation_x,
+    rotation_y,
+    vec_dot,
+    vec_normalize,
+    vec_scale,
 )
 from models import Triangle
 from obj_loader import ObjLoader
@@ -31,6 +39,7 @@ from viewer_state import ViewerState
 
 class RenderTriangle(NamedTuple):
     """Pre-processed triangle ready for 2-D projection and drawing."""
+
     triangle: Triangle
     points_3d: tuple[tuple[float, float, float], ...]
     normal: tuple[float, float, float]
@@ -68,7 +77,11 @@ class ViewerApp:
         open_button.pack(side="left", padx=(0, 8))
 
         status_label = tk.Label(
-            controls, textvariable=self.status_var, fg=HUD_COLOR, bg=BACKGROUND, anchor="w"
+            controls,
+            textvariable=self.status_var,
+            fg=HUD_COLOR,
+            bg=BACKGROUND,
+            anchor="w",
         )
         status_label.pack(side="left")
 
@@ -183,7 +196,9 @@ class ViewerApp:
         if self.state.projection == "isometric":
             # Standard isometric: rotate Y first (turn 45°), then tilt X down.
             # mat_mul(A, B) applies B first, so Y rotation goes on the right.
-            return mat_mul(rotation_x(math.radians(-35.264)), rotation_y(math.radians(45)))
+            return mat_mul(
+                rotation_x(math.radians(-35.264)), rotation_y(math.radians(45))
+            )
         return identity_matrix()
 
     def _project_point(self, point, canvas_width, canvas_height):
@@ -200,9 +215,14 @@ class ViewerApp:
         return (x, y)
 
     def _triangle_color(self, triangle, normal):
+        assert self.mesh is not None, "_triangle_color called with no mesh loaded"
         light_dir = vec_normalize(LIGHT_DIRECTION)
         intensity = max(0.0, vec_dot(vec_normalize(normal), vec_scale(light_dir, -1.0)))
-        material = self.mesh.materials.get(triangle.material_name) if triangle.material_name else None
+        material = (
+            self.mesh.materials.get(triangle.material_name)
+            if triangle.material_name
+            else None
+        )
         base_rgb = kd_to_rgb(material.kd if material else (0.75, 0.78, 0.84))
         return apply_shading(base_rgb, intensity)
 
@@ -224,7 +244,9 @@ class ViewerApp:
             v0 = transformed_vertices[triangle.vertex_indices[0]]
             v1 = transformed_vertices[triangle.vertex_indices[1]]
             v2 = transformed_vertices[triangle.vertex_indices[2]]
-            transformed_normal = vec_normalize(mat3_vec_mul(norm_mat, triangle.face_normal))
+            transformed_normal = vec_normalize(
+                mat3_vec_mul(norm_mat, triangle.face_normal)
+            )
 
             if transformed_normal[2] >= 0:
                 continue
@@ -239,9 +261,11 @@ class ViewerApp:
                 )
             )
 
-        # Painter's algorithm: draw far geometry first (ascending depth) so
-        # that nearer faces paint over them.
-        render_triangles.sort(key=lambda item: item.depth)
+        # Painter's algorithm: draw far geometry first (descending z, i.e. highest z
+        # first) so that nearer faces, drawn last, paint over them correctly.
+        # The camera sits at z = -CAMERA_DISTANCE looking toward +Z, so larger z
+        # values are farther away and must be rendered first.
+        render_triangles.sort(key=lambda item: item.depth, reverse=True)
         return render_triangles
 
     def draw(self):
@@ -283,10 +307,21 @@ class ViewerApp:
 
             if self.state.render_mode in {"wireframe", "both"}:
                 wire_color = WIRE_COLOR
-                if triangle.material_name and triangle.material_name in self.mesh.materials:
+                if (
+                    triangle.material_name
+                    and triangle.material_name in self.mesh.materials
+                ):
                     base = kd_to_rgb(self.mesh.materials[triangle.material_name].kd)
-                    wire_color = rgb_to_hex(tuple(min(255, value + 20) for value in base))
-                self.canvas.create_polygon(points_2d, outline=wire_color, width=1, fill="")
+                    wire_color = rgb_to_hex(
+                        (
+                            min(255, base[0] + 20),
+                            min(255, base[1] + 20),
+                            min(255, base[2] + 20),
+                        )
+                    )
+                self.canvas.create_polygon(
+                    points_2d, outline=wire_color, width=1, fill=""
+                )
 
         self._draw_hud(width, height)
 

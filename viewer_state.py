@@ -1,10 +1,12 @@
-import math
-
-from constants import TRANSLATION_STEP, ROTATION_STEP, SCALE_STEP
+from constants import ROTATION_STEP, SCALE_STEP, TRANSLATION_STEP
 from math_utils import (
     clamp,
-    scaling_matrix, rotation_x, rotation_y, rotation_z,
-    translation_matrix, mat_mul,
+    mat_mul,
+    rotation_x,
+    rotation_y,
+    rotation_z,
+    scaling_matrix,
+    translation_matrix,
 )
 
 
@@ -25,7 +27,9 @@ class ViewerState:
         rot_x = rotation_x(self.rotation[0])
         rot_y = rotation_y(self.rotation[1])
         rot_z = rotation_z(self.rotation[2])
-        trans = translation_matrix(self.translation[0], self.translation[1], self.translation[2])
+        trans = translation_matrix(
+            self.translation[0], self.translation[1], self.translation[2]
+        )
         return mat_mul(trans, mat_mul(rot_z, mat_mul(rot_y, mat_mul(rot_x, scale))))
 
     def apply_arrow_transform(self, key):

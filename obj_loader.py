@@ -1,8 +1,11 @@
 import os
 
 from math_utils import (
-    vec_normalize, vec_sub, vec_scale, vec_cross,
     centroid,
+    vec_cross,
+    vec_normalize,
+    vec_scale,
+    vec_sub,
 )
 from models import Material, Mesh, Triangle
 
@@ -12,8 +15,8 @@ class ObjLoader:
         mesh = Mesh(source_path=obj_path)
         current_material = None
         mtllibs = []
-        uvs = []
-        normals = []
+        uvs: list[tuple[float, float]] = []
+        normals: list[tuple[float, float, float]] = []
 
         try:
             with open(obj_path, "r", encoding="utf-8-sig") as handle:
@@ -28,13 +31,13 @@ class ObjLoader:
 
                     try:
                         if keyword == "v":
-                            mesh.vertices.append(self._parse_components(values, 3, "vertex"))
+                            mesh.vertices.append(self._parse_vec3(values, "vertex"))
                         elif keyword == "vn":
                             normals.append(
-                                vec_normalize(self._parse_components(values, 3, "normal"))
+                                vec_normalize(self._parse_vec3(values, "normal"))
                             )
                         elif keyword == "vt":
-                            uvs.append(self._parse_components(values, 2, "texture coordinate"))
+                            uvs.append(self._parse_vec2(values, "texture coordinate"))
                         elif keyword == "f":
                             if len(values) < 3:
                                 raise ValueError("face requires at least 3 vertices")
@@ -61,7 +64,9 @@ class ObjLoader:
                             f"{os.path.basename(obj_path)}:{line_number}: {exc}"
                         ) from exc
         except UnicodeDecodeError as exc:
-            raise ValueError(f"{os.path.basename(obj_path)}: invalid UTF-8 data") from exc
+            raise ValueError(
+                f"{os.path.basename(obj_path)}: invalid UTF-8 data"
+            ) from exc
 
         for mtllib in mtllibs:
             mtl_path = os.path.join(os.path.dirname(obj_path), mtllib)
@@ -73,13 +78,29 @@ class ObjLoader:
         mesh.euler_stats = self._compute_euler_stats(mesh)
         return mesh
 
-    def _parse_components(self, values, count, label):
-        if len(values) < count:
-            raise ValueError(f"{label} requires at least {count} components")
+    # ------------------------------------------------------------------
+    # Typed component parsers
+    # ------------------------------------------------------------------
+
+    def _parse_vec3(self, values: list[str], label: str) -> tuple[float, float, float]:
+        if len(values) < 3:
+            raise ValueError(f"{label} requires at least 3 components")
         try:
-            return tuple(float(value) for value in values[:count])
+            return (float(values[0]), float(values[1]), float(values[2]))
         except ValueError as exc:
             raise ValueError(f"invalid {label} value") from exc
+
+    def _parse_vec2(self, values: list[str], label: str) -> tuple[float, float]:
+        if len(values) < 2:
+            raise ValueError(f"{label} requires at least 2 components")
+        try:
+            return (float(values[0]), float(values[1]))
+        except ValueError as exc:
+            raise ValueError(f"invalid {label} value") from exc
+
+    # ------------------------------------------------------------------
+    # Face parsing helpers
+    # ------------------------------------------------------------------
 
     def _parse_face_vertex(self, token, vertex_count, uv_count, normal_count):
         items = token.split("/")
@@ -125,6 +146,10 @@ class ObjLoader:
             )
         return triangles
 
+    # ------------------------------------------------------------------
+    # MTL loading
+    # ------------------------------------------------------------------
+
     def _load_mtl(self, mtl_path):
         materials = {}
         current = None
@@ -145,15 +170,21 @@ class ObjLoader:
                             current = Material(values[0])
                             materials[current.name] = current
                         elif keyword == "Kd" and current:
-                            current.kd = self._parse_components(values, 3, "diffuse color")
+                            current.kd = self._parse_vec3(values, "diffuse color")
                     except ValueError as exc:
                         raise ValueError(
                             f"{os.path.basename(mtl_path)}:{line_number}: {exc}"
                         ) from exc
         except UnicodeDecodeError as exc:
-            raise ValueError(f"{os.path.basename(mtl_path)}: invalid UTF-8 data") from exc
+            raise ValueError(
+                f"{os.path.basename(mtl_path)}: invalid UTF-8 data"
+            ) from exc
 
         return materials
+
+    # ------------------------------------------------------------------
+    # Mesh post-processing
+    # ------------------------------------------------------------------
 
     def _center_and_scale(self, mesh):
         if not mesh.vertices:
@@ -161,7 +192,9 @@ class ObjLoader:
 
         center = centroid(mesh.vertices)
         centered = [vec_sub(vertex, center) for vertex in mesh.vertices]
-        max_extent = max(max(abs(component) for component in vertex) for vertex in centered)
+        max_extent = max(
+            max(abs(component) for component in vertex) for vertex in centered
+        )
         scale = 1.0 / max_extent if max_extent else 1.0
         mesh.vertices = [vec_scale(vertex, scale) for vertex in centered]
 

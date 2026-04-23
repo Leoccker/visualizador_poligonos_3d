@@ -10,6 +10,7 @@ Mat4 = list[list[float]]
 # Generic helpers
 # ---------------------------------------------------------------------------
 
+
 def clamp(value: float, minimum: float, maximum: float) -> float:
     return max(minimum, min(maximum, value))
 
@@ -17,6 +18,7 @@ def clamp(value: float, minimum: float, maximum: float) -> float:
 # ---------------------------------------------------------------------------
 # Vector math
 # ---------------------------------------------------------------------------
+
 
 def vec_add(a: Vec3, b: Vec3) -> Vec3:
     return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
@@ -66,7 +68,8 @@ def centroid(points: list[Vec3]) -> Vec3:
 # Color helpers
 # ---------------------------------------------------------------------------
 
-def rgb_to_hex(rgb: tuple[int, ...]) -> str:
+
+def rgb_to_hex(rgb: tuple[int, int, int]) -> str:
     r = int(clamp(rgb[0], 0, 255))
     g = int(clamp(rgb[1], 0, 255))
     b = int(clamp(rgb[2], 0, 255))
@@ -74,18 +77,29 @@ def rgb_to_hex(rgb: tuple[int, ...]) -> str:
 
 
 def kd_to_rgb(kd: Vec3) -> tuple[int, int, int]:
-    return tuple(int(clamp(channel, 0.0, 1.0) * 255) for channel in kd)
+    return (
+        int(clamp(kd[0], 0.0, 1.0) * 255),
+        int(clamp(kd[1], 0.0, 1.0) * 255),
+        int(clamp(kd[2], 0.0, 1.0) * 255),
+    )
 
 
-def apply_shading(base_rgb: tuple[int, ...], intensity: float) -> str:
+def apply_shading(base_rgb: tuple[int, int, int], intensity: float) -> str:
     ambient = 0.35
     shade = clamp(ambient + (1.0 - ambient) * intensity, 0.0, 1.0)
-    return rgb_to_hex(tuple(channel * shade for channel in base_rgb))
+    return rgb_to_hex(
+        (
+            int(base_rgb[0] * shade),
+            int(base_rgb[1] * shade),
+            int(base_rgb[2] * shade),
+        )
+    )
 
 
 # ---------------------------------------------------------------------------
 # Matrix math (4×4 homogeneous)
 # ---------------------------------------------------------------------------
+
 
 def identity_matrix() -> Mat4:
     return [
@@ -104,10 +118,16 @@ def mat_mul(a: Mat4, b: Mat4) -> Mat4:
     return result
 
 
-def mat_vec_mul(matrix: Mat4, vector: Vec3, w: float = 1.0) -> tuple[float, float, float, float]:
-    values = [vector[0], vector[1], vector[2], w]
-    result = tuple(sum(matrix[row][col] * values[col] for col in range(4)) for row in range(4))
-    return result
+def mat_vec_mul(
+    matrix: Mat4, vector: Vec3, w: float = 1.0
+) -> tuple[float, float, float, float]:
+    x, y, z = vector[0], vector[1], vector[2]
+    return (
+        matrix[0][0] * x + matrix[0][1] * y + matrix[0][2] * z + matrix[0][3] * w,
+        matrix[1][0] * x + matrix[1][1] * y + matrix[1][2] * z + matrix[1][3] * w,
+        matrix[2][0] * x + matrix[2][1] * y + matrix[2][2] * z + matrix[2][3] * w,
+        matrix[3][0] * x + matrix[3][1] * y + matrix[3][2] * z + matrix[3][3] * w,
+    )
 
 
 def translation_matrix(tx: float, ty: float, tz: float) -> Mat4:
@@ -160,14 +180,57 @@ def rotation_z(angle: float) -> Mat4:
 
 
 def normal_matrix(model_matrix: Mat4) -> Mat3:
-    # WARNING: This extracts the upper-left 3×3 sub-matrix directly, which is
-    # only a correct normal matrix when the transformation consists solely of
-    # rotations and *uniform* scaling.  For non-uniform scaling or shear, the
-    # proper normal matrix is the transpose of the inverse of this sub-matrix.
+    """
+    Returns the correct normal matrix: transpose(inverse(upper-left 3×3)).
+
+    This is mathematically correct for all affine transforms, including
+    non-uniform scaling and shear.  It is computed as the cofactor matrix of
+    the upper-left 3×3 divided by its determinant, which equals
+    transpose(inverse(M)) without needing a separate transpose step.
+
+    Falls back to the plain upper-left 3×3 if the sub-matrix is singular
+    (determinant ≈ 0), which only happens for degenerate/collapsed meshes.
+    """
+    a = model_matrix[0][0]
+    b = model_matrix[0][1]
+    c = model_matrix[0][2]
+    d = model_matrix[1][0]
+    e = model_matrix[1][1]
+    f = model_matrix[1][2]
+    g = model_matrix[2][0]
+    h = model_matrix[2][1]
+    i = model_matrix[2][2]
+
+    det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g)
+
+    if abs(det) < 1e-10:
+        # Degenerate transform – fall back to the plain upper-left 3×3.
+        return [
+            [a, b, c],
+            [d, e, f],
+            [g, h, i],
+        ]
+
+    inv_det = 1.0 / det
+
+    # transpose(inverse(M)) equals the cofactor matrix divided by det(M).
+    # Cofactor C_ij = (-1)^(i+j) * minor_ij
     return [
-        [model_matrix[0][0], model_matrix[0][1], model_matrix[0][2]],
-        [model_matrix[1][0], model_matrix[1][1], model_matrix[1][2]],
-        [model_matrix[2][0], model_matrix[2][1], model_matrix[2][2]],
+        [
+            (e * i - f * h) * inv_det,
+            -(d * i - f * g) * inv_det,
+            (d * h - e * g) * inv_det,
+        ],
+        [
+            -(b * i - c * h) * inv_det,
+            (a * i - c * g) * inv_det,
+            -(a * h - b * g) * inv_det,
+        ],
+        [
+            (b * f - c * e) * inv_det,
+            -(a * f - c * d) * inv_det,
+            (a * e - b * d) * inv_det,
+        ],
     ]
 
 

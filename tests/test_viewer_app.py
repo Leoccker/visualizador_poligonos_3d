@@ -1,4 +1,5 @@
 import unittest
+from typing import Any
 from unittest.mock import patch
 
 from models import Mesh, Triangle
@@ -29,8 +30,8 @@ class FakeLoader:
 
 
 class ViewerAppTests(unittest.TestCase):
-    def _make_app(self):
-        app = ViewerApp.__new__(ViewerApp)
+    def _make_app(self) -> Any:
+        app: Any = ViewerApp.__new__(ViewerApp)
         app.state = ViewerState()
         app.status_var = FakeVar("old status")
         app.info_var = FakeVar("old info")
@@ -56,16 +57,30 @@ class ViewerAppTests(unittest.TestCase):
                 (0.0, 1.0, -2.0),
             ],
             triangles=[
-                Triangle(vertex_indices=(0, 1, 2), material_name=None, face_normal=(0.0, 0.0, -1.0)),
-                Triangle(vertex_indices=(3, 4, 5), material_name=None, face_normal=(0.0, 0.0, -1.0)),
+                Triangle(
+                    vertex_indices=(0, 1, 2),
+                    material_name=None,
+                    face_normal=(0.0, 0.0, -1.0),
+                ),
+                Triangle(
+                    vertex_indices=(3, 4, 5),
+                    material_name=None,
+                    face_normal=(0.0, 0.0, -1.0),
+                ),
             ],
         )
         app.state.projection = "perspective"
 
         render_data = app._build_render_data()
 
-        self.assertEqual([item.triangle.vertex_indices for item in render_data], [(3, 4, 5), (0, 1, 2)])
-        self.assertEqual([item.depth for item in render_data], [-2.0, 1.0])
+        # Camera is at z = -CAMERA_DISTANCE (-4.0) looking toward +Z.
+        # Triangle (0,1,2) at z=1.0  is 5 units from the camera (FAR)  → drawn first.
+        # Triangle (3,4,5) at z=-2.0 is 2 units from the camera (NEAR) → drawn last.
+        self.assertEqual(
+            [item.triangle.vertex_indices for item in render_data],
+            [(0, 1, 2), (3, 4, 5)],
+        )
+        self.assertEqual([item.depth for item in render_data], [1.0, -2.0])
 
     def test_open_obj_clears_stale_mesh_state_after_load_failure(self):
         app = self._make_app()
@@ -73,7 +88,9 @@ class ViewerAppTests(unittest.TestCase):
         app.mesh = Mesh(source_path="old.obj")
         app.state.rotation = [1.0, 2.0, 3.0]
 
-        with patch("viewer_app.filedialog.askopenfilename", return_value="/tmp/bad.obj"):
+        with patch(
+            "viewer_app.filedialog.askopenfilename", return_value="/tmp/bad.obj"
+        ):
             with patch("viewer_app.messagebox.showerror") as showerror:
                 app.open_obj()
 

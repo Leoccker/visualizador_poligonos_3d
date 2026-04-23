@@ -5,7 +5,7 @@ from viewer_app import ViewerApp
 
 def main():
     root = tk.Tk()
-    app = ViewerApp(root)
+    _app = ViewerApp(root)
     root.minsize(900, 650)
     root.mainloop()
 
