@@ -1,11 +1,68 @@
-import React, { useRef, useMemo, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, OrthographicCamera, Grid, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 
 // Tag used to identify wireframe helpers we add so we can clean them up
 const WIRE_TAG = '__wireOverlay';
-const WIRE_SCALE = 1.02; // wireframe is slightly larger than the solid
+const BOTH_MODE_WIRE_SCALE = 5; // wireframe surrounds the centered solid model
+
+function disposeWireOverlay(root) {
+  if (!root) return;
+
+  root.traverse((child) => {
+    child.geometry?.dispose();
+
+    if (Array.isArray(child.material)) {
+      child.material.forEach((mat) => mat.dispose());
+    } else {
+      child.material?.dispose();
+    }
+  });
+}
+
+function removeWireOverlays(model) {
+  const overlays = [];
+
+  model.traverse((child) => {
+    if (child.userData[WIRE_TAG]) overlays.push(child);
+  });
+
+  overlays.forEach((overlay) => {
+    overlay.parent?.remove(overlay);
+    disposeWireOverlay(overlay);
+  });
+}
+
+function createCenteredWireOverlay(model) {
+  const overlay = new THREE.Group();
+  const rootInverse = new THREE.Matrix4();
+
+  overlay.userData[WIRE_TAG] = true;
+  overlay.scale.setScalar(BOTH_MODE_WIRE_SCALE);
+
+  model.updateMatrixWorld(true);
+  rootInverse.copy(model.matrixWorld).invert();
+
+  model.traverse((child) => {
+    if (!child.isMesh) return;
+
+    const edgesGeom = new THREE.EdgesGeometry(child.geometry, 15);
+    const edgesMat = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.75,
+      depthTest: true,
+    });
+    const edgesLine = new THREE.LineSegments(edgesGeom, edgesMat);
+
+    edgesLine.matrix.copy(rootInverse).multiply(child.matrixWorld);
+    edgesLine.matrixAutoUpdate = false;
+    overlay.add(edgesLine);
+  });
+
+  return overlay;
+}
 
 const ModelRenderer = ({ model, renderMode, viewerPosition, viewerRotation, viewerScale }) => {
   const groupRef = useRef();
@@ -19,20 +76,12 @@ const ModelRenderer = ({ model, renderMode, viewerPosition, viewerRotation, view
     }
   });
 
-  // Apply render mode — manages materials AND per-mesh wireframe children
+  // Apply render mode: manages mesh materials and the enlarged wire overlay.
   useEffect(() => {
     if (!model) return;
 
     // 1. Remove any previously-added wireframe helpers
-    const toRemove = [];
-    model.traverse((child) => {
-      if (child.userData[WIRE_TAG]) toRemove.push(child);
-    });
-    toRemove.forEach((obj) => {
-      obj.parent?.remove(obj);
-      obj.geometry?.dispose();
-      if (obj.material) obj.material.dispose();
-    });
+    removeWireOverlays(model);
 
     // 2. Configure materials on every mesh
     model.traverse((child) => {
@@ -60,36 +109,18 @@ const ModelRenderer = ({ model, renderMode, viewerPosition, viewerRotation, view
         });
       }
 
-      // 3. For "both": attach a scaled-up wireframe child to THIS mesh
-      if (renderMode === 'both') {
-        const edgesGeom = new THREE.EdgesGeometry(child.geometry, 15);
-        const edgesMat = new THREE.LineBasicMaterial({
-          color: 0xffffff,
-          transparent: true,
-          opacity: 0.35,
-          depthTest: true,
-        });
-        const edgesLine = new THREE.LineSegments(edgesGeom, edgesMat);
-        edgesLine.userData[WIRE_TAG] = true;
-        edgesLine.scale.set(WIRE_SCALE, WIRE_SCALE, WIRE_SCALE);
-        // Render on top so edges aren't hidden behind faces
-        edgesLine.renderOrder = 1;
-        child.add(edgesLine);
-      }
     });
+
+    // 3. For "both": add one centered wireframe copy around the solid model
+    if (renderMode === 'both') {
+      const wireOverlay = createCenteredWireOverlay(model);
+      model.add(wireOverlay);
+    }
 
     // Cleanup when renderMode changes or unmounts
     return () => {
       if (!model) return;
-      const cleanup = [];
-      model.traverse((child) => {
-        if (child.userData[WIRE_TAG]) cleanup.push(child);
-      });
-      cleanup.forEach((obj) => {
-        obj.parent?.remove(obj);
-        obj.geometry?.dispose();
-        if (obj.material) obj.material.dispose();
-      });
+      removeWireOverlays(model);
     };
   }, [model, renderMode]);
 
