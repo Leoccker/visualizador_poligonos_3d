@@ -1,8 +1,4 @@
-import React from 'react';
-
-export default function Sidebar({ viewerState, stats, materialsData }) {
-  const eulerColor = stats?.status === 'OK' ? 'var(--success)' : 'var(--warning)';
-
+export default function Sidebar({ viewerState, materialsData }) {
   return (
     <div className="glass-panel" style={{
       position: 'absolute',
@@ -17,25 +13,6 @@ export default function Sidebar({ viewerState, stats, materialsData }) {
       maxHeight: 'calc(100vh - 80px)',
       overflowY: 'auto'
     }}>
-      <div>
-        <h3 style={{ margin: '0 0 12px 0', fontSize: '1rem', color: 'var(--text-primary)' }}>Informações da Malha</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-          <div>Vértices (V):</div><div style={{ textAlign: 'right' }}>{stats?.V ?? '-'}</div>
-          <div>Arestas (E):</div><div style={{ textAlign: 'right' }}>{stats?.E ?? '-'}</div>
-          <div>Faces (F):</div><div style={{ textAlign: 'right' }}>{stats?.F ?? '-'}</div>
-        </div>
-        
-        <div style={{ marginTop: '12px', padding: '12px', backgroundColor: 'var(--bg-elevated)', borderRadius: '8px', borderLeft: `4px solid ${stats ? eulerColor : 'var(--border)'}` }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Característica de Euler</div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{stats?.euler ?? '-'}</span>
-            <span style={{ fontSize: '0.8rem', color: stats ? eulerColor : 'inherit' }}>{stats?.status ?? 'Nenhum'}</span>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ height: '1px', backgroundColor: 'var(--border)' }} />
-
       <div>
         <h3 style={{ margin: '0 0 12px 0', fontSize: '1rem', color: 'var(--text-primary)' }}>Materiais</h3>
         {materialsData && materialsData.length > 0 ? (
@@ -58,7 +35,7 @@ export default function Sidebar({ viewerState, stats, materialsData }) {
         <h3 style={{ margin: '0 0 12px 0', fontSize: '1rem', color: 'var(--text-primary)' }}>Transformação</h3>
         
         <div style={{ display: 'flex', gap: '4px', marginBottom: '16px' }}>
-          {['rotate', 'translate', 'scale'].map(mode => (
+          {['rotate', 'translate', 'scale', 'shear'].map(mode => (
             <button 
               key={mode}
               onClick={() => viewerState.setTransformMode(mode)}
@@ -70,7 +47,7 @@ export default function Sidebar({ viewerState, stats, materialsData }) {
                 borderColor: viewerState.transformMode === mode ? 'var(--accent)' : 'var(--border)'
               }}
             >
-              {mode === 'rotate' ? 'Rot' : mode === 'translate' ? 'Pos' : 'Esc'}
+              {mode === 'rotate' ? 'Rot' : mode === 'translate' ? 'Pos' : mode === 'scale' ? 'Esc' : 'Cis'}
             </button>
           ))}
         </div>
@@ -83,6 +60,9 @@ export default function Sidebar({ viewerState, stats, materialsData }) {
         </div>
         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
           Esc: {viewerState.scale.toFixed(2)}x
+        </div>
+        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '6px' }}>
+          Cis: XY: {viewerState.shear[0].toFixed(2)} XZ: {viewerState.shear[1].toFixed(2)} YZ: {viewerState.shear[2].toFixed(2)}
         </div>
       </div>
     </div>

@@ -64,15 +64,31 @@ function createCenteredWireOverlay(model) {
   return overlay;
 }
 
-const ModelRenderer = ({ model, renderMode, viewerPosition, viewerRotation, viewerScale }) => {
+const ModelRenderer = ({ model, renderMode, viewerPosition, viewerRotation, viewerScale, viewerShear }) => {
   const groupRef = useRef();
+  const tempPosition = useRef(new THREE.Vector3());
+  const tempQuaternion = useRef(new THREE.Quaternion());
+  const tempScale = useRef(new THREE.Vector3());
+  const tempShear = useRef(new THREE.Matrix4());
 
   // Apply transformations from viewer state
   useFrame(() => {
     if (groupRef.current) {
-      groupRef.current.position.set(viewerPosition[0], viewerPosition[1], viewerPosition[2]);
-      groupRef.current.rotation.set(viewerRotation[0], viewerRotation[1], viewerRotation[2]);
-      groupRef.current.scale.set(viewerScale, viewerScale, viewerScale);
+      const position = tempPosition.current.set(viewerPosition[0], viewerPosition[1], viewerPosition[2]);
+      const quaternion = tempQuaternion.current.setFromEuler(
+        new THREE.Euler(viewerRotation[0], viewerRotation[1], viewerRotation[2], 'XYZ')
+      );
+      const scale = tempScale.current.set(viewerScale, viewerScale, viewerScale);
+
+      groupRef.current.matrix.compose(position, quaternion, scale);
+      tempShear.current.set(
+        1, viewerShear[0], viewerShear[1], 0,
+        0, 1, viewerShear[2], 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      );
+      groupRef.current.matrix.multiply(tempShear.current);
+      groupRef.current.matrixAutoUpdate = false;
     }
   });
 
@@ -134,7 +150,7 @@ const ModelRenderer = ({ model, renderMode, viewerPosition, viewerRotation, view
 };
 
 export default function Viewport({ model, viewerState }) {
-  const { projection, renderMode, position, rotation, scale } = viewerState;
+  const { projection, renderMode, position, rotation, scale, shear } = viewerState;
 
   const aspect = window.innerWidth / window.innerHeight;
   const isoSize = 4; // Adjust zoom for isometric
@@ -187,6 +203,7 @@ export default function Viewport({ model, viewerState }) {
           viewerPosition={position}
           viewerRotation={rotation}
           viewerScale={scale}
+          viewerShear={shear}
         />
 
         <OrbitControls 

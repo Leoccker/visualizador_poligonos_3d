@@ -8,15 +8,18 @@ export function useViewerState() {
   const [rotation, setRotation] = useState([0, 0, 0]);
   const [position, setPosition] = useState([0, 0, 0]);
   const [scale, setScale] = useState(1);
+  const [shear, setShear] = useState([0, 0, 0]);
 
   const TRANSLATION_STEP = 0.08;
   const ROTATION_STEP = Math.PI / 180 * 7; // ~7 degrees
   const SCALE_STEP = 1.08;
+  const SHEAR_STEP = 0.05;
 
   const reset = useCallback(() => {
     setRotation([0, 0, 0]);
     setPosition([0, 0, 0]);
     setScale(1);
+    setShear([0, 0, 0]);
     setProjection('perspective');
     setRenderMode('both');
     setTransformMode('rotate');
@@ -47,6 +50,7 @@ export function useViewerState() {
       else if (key === 'b') setRenderMode('both');
       else if (key === 'r') setTransformMode('rotate');
       else if (key === 't') setTransformMode('translate');
+      else if (key === 'c') setTransformMode('shear');
 
       // Arrow keys logic based on current transform mode
       else if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(key)) {
@@ -65,6 +69,18 @@ export function useViewerState() {
           else if (key === 'arrowright') setRotation(r => [r[0], r[1] + ROTATION_STEP, r[2]]);
           else if (key === 'arrowup') setRotation(r => [r[0] - ROTATION_STEP, r[1], r[2]]);
           else if (key === 'arrowdown') setRotation(r => [r[0] + ROTATION_STEP, r[1], r[2]]);
+        } else if (transformMode === 'shear') {
+          if (shift) {
+            if (key === 'arrowleft') setShear(s => [s[0], s[1], s[2] - SHEAR_STEP]);
+            else if (key === 'arrowright') setShear(s => [s[0], s[1], s[2] + SHEAR_STEP]);
+            else if (key === 'arrowup') setShear(s => [s[0], s[1] + SHEAR_STEP, s[2]]);
+            else if (key === 'arrowdown') setShear(s => [s[0], s[1] - SHEAR_STEP, s[2]]);
+          } else {
+            if (key === 'arrowleft') setShear(s => [s[0] - SHEAR_STEP, s[1], s[2]]);
+            else if (key === 'arrowright') setShear(s => [s[0] + SHEAR_STEP, s[1], s[2]]);
+            else if (key === 'arrowup') setShear(s => [s[0], s[1] + SHEAR_STEP, s[2]]);
+            else if (key === 'arrowdown') setShear(s => [s[0], s[1] - SHEAR_STEP, s[2]]);
+          }
         }
       }
       
@@ -79,7 +95,7 @@ export function useViewerState() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [transformMode, reset]);
+  }, [transformMode, reset, TRANSLATION_STEP, ROTATION_STEP, SCALE_STEP, SHEAR_STEP]);
 
   return {
     renderMode,
@@ -94,6 +110,8 @@ export function useViewerState() {
     setPosition,
     scale,
     setScale,
+    shear,
+    setShear,
     reset,
   };
 }
