@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function HelpModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
@@ -31,12 +29,16 @@ export default function HelpModal({ isOpen, onClose }) {
               <td>Render: Wireframe / Sólido / Ambos</td>
             </tr>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              <td style={{ padding: '8px 0' }}><strong>R / T / Shift+S</strong></td>
-              <td>Modo Transformação: Rotação / Translação / Escala</td>
+              <td style={{ padding: '8px 0' }}><strong>R / T / Shift+S / C</strong></td>
+              <td>Modo Transformação: Rotação / Translação / Escala / Cisalhamento</td>
             </tr>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
               <td style={{ padding: '8px 0' }}><strong>Setas</strong></td>
               <td>Aplicam a transformação do modo atual</td>
+            </tr>
+            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+              <td style={{ padding: '8px 0' }}><strong>Shift + ← / →</strong></td>
+              <td>Altera o cisalhamento YZ</td>
             </tr>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
               <td style={{ padding: '8px 0' }}><strong>X / Y / Z</strong></td>

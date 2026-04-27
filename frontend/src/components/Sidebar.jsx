@@ -58,7 +58,7 @@ export default function Sidebar({ viewerState, stats, materialsData }) {
         <h3 style={{ margin: '0 0 12px 0', fontSize: '1rem', color: 'var(--text-primary)' }}>Transformação</h3>
 
         <div style={{ display: 'flex', gap: '4px', marginBottom: '16px' }}>
-          {['rotate', 'translate', 'scale'].map(mode => (
+          {['rotate', 'translate', 'scale', 'shear'].map(mode => (
             <button
               key={mode}
               onClick={() => viewerState.setTransformMode(mode)}
@@ -70,7 +70,7 @@ export default function Sidebar({ viewerState, stats, materialsData }) {
                 borderColor: viewerState.transformMode === mode ? 'var(--accent)' : 'var(--border)'
               }}
             >
-              {mode === 'rotate' ? 'Rot' : mode === 'translate' ? 'Pos' : 'Esc'}
+              {mode === 'rotate' ? 'Rot' : mode === 'translate' ? 'Pos' : mode === 'scale' ? 'Esc' : 'Cis'}
             </button>
           ))}
         </div>
@@ -83,6 +83,9 @@ export default function Sidebar({ viewerState, stats, materialsData }) {
         </div>
         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
           Esc: {viewerState.scale.toFixed(2)}x
+        </div>
+        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '6px' }}>
+          Cis: XY: {viewerState.shear[0].toFixed(2)} XZ: {viewerState.shear[1].toFixed(2)} YZ: {viewerState.shear[2].toFixed(2)}
         </div>
       </div>
     </div>
