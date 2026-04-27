@@ -24,7 +24,7 @@ export default function Sidebar({ viewerState, stats, materialsData }) {
           <div>Arestas (E):</div><div style={{ textAlign: 'right' }}>{stats?.E ?? '-'}</div>
           <div>Faces (F):</div><div style={{ textAlign: 'right' }}>{stats?.F ?? '-'}</div>
         </div>
-        
+
         <div style={{ marginTop: '12px', padding: '12px', backgroundColor: 'var(--bg-elevated)', borderRadius: '8px', borderLeft: `4px solid ${stats ? eulerColor : 'var(--border)'}` }}>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Característica de Euler</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -56,15 +56,15 @@ export default function Sidebar({ viewerState, stats, materialsData }) {
 
       <div>
         <h3 style={{ margin: '0 0 12px 0', fontSize: '1rem', color: 'var(--text-primary)' }}>Transformação</h3>
-        
+
         <div style={{ display: 'flex', gap: '4px', marginBottom: '16px' }}>
           {['rotate', 'translate', 'scale'].map(mode => (
-            <button 
+            <button
               key={mode}
               onClick={() => viewerState.setTransformMode(mode)}
-              style={{ 
-                flex: 1, 
-                padding: '4px 0', 
+              style={{
+                flex: 1,
+                padding: '4px 0',
                 fontSize: '0.8rem',
                 backgroundColor: viewerState.transformMode === mode ? 'var(--accent)' : 'transparent',
                 borderColor: viewerState.transformMode === mode ? 'var(--accent)' : 'var(--border)'

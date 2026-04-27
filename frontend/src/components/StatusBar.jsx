@@ -25,7 +25,7 @@ export default function StatusBar({ fileName, isLoading, error, viewerState }) {
           <span style={{ color: 'var(--text-secondary)' }}>Abra ou arraste um arquivo .obj para iniciar</span>
         )}
       </div>
-      
+
       <div style={{ display: 'flex', gap: '16px', color: 'var(--text-secondary)' }}>
         <span>Render: <strong style={{ color: 'var(--text-primary)' }}>{viewerState.renderMode}</strong></span>
         <span>Modo: <strong style={{ color: 'var(--text-primary)' }}>{viewerState.transformMode}</strong></span>
