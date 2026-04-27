@@ -18,36 +18,36 @@ export default function App() {
   return (
     <FileDropZone onFilesDrop={loadFromFiles}>
       <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
-        
-        <Viewport 
-          model={model} 
-          viewerState={viewerState} 
-        />
-        
-        <Toolbar 
-          viewerState={viewerState} 
-          onOpenHelp={() => setIsHelpOpen(true)} 
-          onFileSelect={loadFromFiles}
-        />
-        
-        {model && (
-          <Sidebar 
-            viewerState={viewerState} 
-            stats={stats} 
-            materialsData={materialsData}
-          />
-        )}
-        
-        <StatusBar 
-          fileName={fileName} 
-          isLoading={isLoading} 
-          error={error} 
+
+        <Viewport
+          model={model}
           viewerState={viewerState}
         />
 
-        <HelpModal 
-          isOpen={isHelpOpen} 
-          onClose={() => setIsHelpOpen(false)} 
+        <Toolbar
+          viewerState={viewerState}
+          onOpenHelp={() => setIsHelpOpen(true)}
+          onFileSelect={loadFromFiles}
+        />
+
+        {model && (
+          <Sidebar
+            viewerState={viewerState}
+            stats={stats}
+            materialsData={materialsData}
+          />
+        )}
+
+        <StatusBar
+          fileName={fileName}
+          isLoading={isLoading}
+          error={error}
+          viewerState={viewerState}
+        />
+
+        <HelpModal
+          isOpen={isHelpOpen}
+          onClose={() => setIsHelpOpen(false)}
         />
       </div>
     </FileDropZone>
