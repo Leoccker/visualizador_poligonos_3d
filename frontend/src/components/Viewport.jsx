@@ -5,7 +5,6 @@ import * as THREE from 'three';
 
 // Tag used to identify wireframe helpers we add so we can clean them up
 const WIRE_TAG = '__wireOverlay';
-const BOTH_MODE_WIRE_SCALE = 5; // wireframe surrounds the centered solid model
 
 function disposeWireOverlay(root) {
   if (!root) return;
@@ -34,34 +33,36 @@ function removeWireOverlays(model) {
   });
 }
 
-function createCenteredWireOverlay(model) {
-  const overlay = new THREE.Group();
-  const rootInverse = new THREE.Matrix4();
-
-  overlay.userData[WIRE_TAG] = true;
-  overlay.scale.setScalar(BOTH_MODE_WIRE_SCALE);
-
-  model.updateMatrixWorld(true);
-  rootInverse.copy(model.matrixWorld).invert();
-
+function addWireOverlays(model) {
+  const meshesToOverlay = [];
   model.traverse((child) => {
-    if (!child.isMesh) return;
-
-    const edgesGeom = new THREE.EdgesGeometry(child.geometry, 15);
-    const edgesMat = new THREE.LineBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.75,
-      depthTest: true,
-    });
-    const edgesLine = new THREE.LineSegments(edgesGeom, edgesMat);
-
-    edgesLine.matrix.copy(rootInverse).multiply(child.matrixWorld);
-    edgesLine.matrixAutoUpdate = false;
-    overlay.add(edgesLine);
+    if (child.isMesh && !child.userData[WIRE_TAG]) meshesToOverlay.push(child);
   });
 
-  return overlay;
+  meshesToOverlay.forEach((mesh) => {
+    // Push the solid surface back in the depth buffer so the wire lines sit in front
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    mats.forEach((mat) => {
+      mat.polygonOffset = true;
+      mat.polygonOffsetFactor = 1;
+      mat.polygonOffsetUnits = 1;
+      mat.transparent = true;
+      mat.opacity = 0.45;
+      mat.needsUpdate = true;
+    });
+
+    // WireframeGeometry shows every triangle edge — identical to mat.wireframe=true
+    const edgesGeom = new THREE.WireframeGeometry(mesh.geometry);
+    const edgesMat = new THREE.LineBasicMaterial({
+      color: 0xff2222,
+      transparent: false,
+      depthTest: false, // always visible, even through other solid surfaces
+    });
+    const edgesLine = new THREE.LineSegments(edgesGeom, edgesMat);
+    edgesLine.userData[WIRE_TAG] = true;
+    edgesLine.renderOrder = 2; // draw after everything solid
+    mesh.add(edgesLine);
+  });
 }
 
 const ModelRenderer = ({ model, renderMode, viewerPosition, viewerRotation, viewerScale, viewerShear }) => {
@@ -115,22 +116,24 @@ const ModelRenderer = ({ model, renderMode, viewerPosition, viewerRotation, view
           mat.needsUpdate = true;
         });
       } else {
-        // solid or both: show material as solid
+        // solid or both: show material as solid, reset any "both" overrides
         mats.forEach((mat) => {
           mat.wireframe = false;
           mat.transparent = false;
           mat.opacity = 1.0;
           mat.flatShading = true;
+          mat.polygonOffset = false;
+          mat.polygonOffsetFactor = 0;
+          mat.polygonOffsetUnits = 0;
           mat.needsUpdate = true;
         });
       }
 
     });
 
-    // 3. For "both": add one centered wireframe copy around the solid model
+    // 3. For "both": add edge-wireframe overlays directly on each mesh
     if (renderMode === 'both') {
-      const wireOverlay = createCenteredWireOverlay(model);
-      model.add(wireOverlay);
+      addWireOverlays(model);
     }
 
     // Cleanup when renderMode changes or unmounts
