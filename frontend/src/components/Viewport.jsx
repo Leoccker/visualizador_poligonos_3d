@@ -5,7 +5,7 @@ import * as THREE from 'three';
 
 // Tag used to identify wireframe helpers we add so we can clean them up
 const WIRE_TAG = '__wireOverlay';
-const BOTH_MODE_WIRE_SCALE = 5; // wireframe surrounds the centered solid model
+const BOTH_MODE_WIRE_SCALE = 1.0; // wireframe overlays the solid model at the same size
 
 function disposeWireOverlay(root) {
   if (!root) return;
@@ -47,7 +47,7 @@ function createCenteredWireOverlay(model) {
   model.traverse((child) => {
     if (!child.isMesh) return;
 
-    const edgesGeom = new THREE.EdgesGeometry(child.geometry, 15);
+    const edgesGeom = new THREE.WireframeGeometry(child.geometry);
     const edgesMat = new THREE.LineBasicMaterial({
       color: 0xffffff,
       transparent: true,
