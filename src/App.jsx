@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import Viewport from './components/Viewport';
 import Toolbar from './components/Toolbar';
@@ -12,7 +12,7 @@ import { useModelLoader } from './hooks/useModelLoader';
 
 export default function App() {
   const viewerState = useViewerState();
-  const { model, stats, materialsData, isLoading, error, fileName, loadFromFiles, loadDefaultCube } = useModelLoader();
+  const { model, stats, materialsData, isLoading, error, fileName, loadFromFiles } = useModelLoader();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   return (

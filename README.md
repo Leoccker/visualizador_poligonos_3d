@@ -20,6 +20,7 @@ Um aplicativo web interativo para visualizar e analisar modelos 3D no formato OB
 
 - Node.js 16+ instalado
 - npm ou yarn
+- Python 3.10+ instalado
 
 ### Passo 1: Instalação de Dependências
 
@@ -27,14 +28,23 @@ Um aplicativo web interativo para visualizar e analisar modelos 3D no formato OB
 npm install
 ```
 
-### Passo 2: Executar em Desenvolvimento
+### Passo 2: Executar o Backend
 
-Para iniciar o servidor de desenvolvimento:
+Em um terminal:
+
+```bash
+python3 backend/api_server.py --host 127.0.0.1 --port 8000
+```
+
+### Passo 3: Executar o Frontend
+
+Em outro terminal:
 
 ```bash
 npm run dev
 ```
 
+O frontend encaminha chamadas `/api` para o backend local em `http://127.0.0.1:8000`.
 O aplicativo será acessível em `http://localhost:5173` (ou outra porta indicada no terminal).
 
 ## Como Usar

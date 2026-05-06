@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 export default function Toolbar({ viewerState, onOpenHelp, onFileSelect }) {
   const fileInputRef = useRef(null);
