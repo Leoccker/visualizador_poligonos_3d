@@ -1,0 +1,283 @@
+# Material library generated for alfa147.obj
+# Uses existing material names referenced by usemtl in the OBJ.
+# Keep this file in the same folder as alfa147.obj.
+
+# third brake light
+newmtl Alfa-3stop
+Ka 0.9500 0.0200 0.0100
+Kd 1.0000 0.0500 0.0400
+Ks 0.4000 0.4000 0.4000
+Ns 370
+d 0.9500
+Tr 0.0500
+illum 4
+
+# matte black
+newmtl Alfa-black
+Ka 0.0050 0.0050 0.0060
+Kd 0.0100 0.0100 0.0120
+Ks 0.1500 0.1500 0.1500
+Ns 145
+d 1.0000
+Tr 0.0000
+illum 1
+
+# red painted details
+newmtl Alfa-red
+Ka 0.7000 0.0200 0.0150
+Kd 0.9500 0.0600 0.0500
+Ks 0.3500 0.3500 0.3500
+Ns 325
+d 1.0000
+Tr 0.0000
+illum 2
+
+# headlight lens
+newmtl Alfa-fl-lens
+Ka 0.7500 0.7000 0.5000
+Kd 1.0000 0.9200 0.6500
+Ks 0.6500 0.6500 0.6500
+Ns 595
+d 0.8800
+Tr 0.1200
+illum 4
+
+# headlight reflector
+newmtl Alfa-fl-mirror
+Ka 0.4500 0.4500 0.4300
+Kd 0.8000 0.8000 0.7800
+Ks 0.9000 0.9000 0.9000
+Ns 820
+d 1.0000
+Tr 0.0000
+illum 2
+
+# headlight frame
+newmtl Alfa-fl-frame
+Ka 0.0200 0.0200 0.0200
+Kd 0.0800 0.0800 0.0800
+Ks 0.2500 0.2500 0.2500
+Ns 235
+d 1.0000
+Tr 0.0000
+illum 1
+
+# chrome
+newmtl Alfa-chrome
+Ka 0.4500 0.4500 0.4300
+Kd 0.8000 0.8000 0.7800
+Ks 0.9500 0.9500 0.9500
+Ns 865
+d 1.0000
+Tr 0.0000
+illum 2
+
+# trim/shield
+newmtl Alfa-shields
+Ka 0.0400 0.0400 0.0400
+Kd 0.1800 0.1800 0.1700
+Ks 0.3500 0.3500 0.3500
+Ns 325
+d 1.0000
+Tr 0.0000
+illum 2
+
+# bulb amber
+newmtl Alfa-fl-bulb
+Ka 1.0000 0.7500 0.2500
+Kd 1.0000 0.8800 0.4500
+Ks 0.9000 0.9000 0.9000
+Ns 820
+d 1.0000
+Tr 0.0000
+illum 2
+
+# amber side light
+newmtl Alfa-sidelight
+Ka 1.0000 0.4500 0.0500
+Kd 1.0000 0.6500 0.1800
+Ks 0.4500 0.4500 0.4500
+Ns 415
+d 0.9000
+Tr 0.1000
+illum 4
+
+# headlight glass
+newmtl Alfa-fl-glass
+Ka 0.1500 0.2000 0.2200
+Kd 0.5500 0.6500 0.7000
+Ks 0.8500 0.8500 0.8500
+Ns 775
+d 0.7000
+Tr 0.3000
+illum 4
+
+# red light/detail
+newmtl Alfa-small_red
+Ka 0.9000 0.0500 0.0200
+Kd 1.0000 0.0800 0.0500
+Ks 0.2500 0.2500 0.2500
+Ns 235
+d 1.0000
+Tr 0.0000
+illum 1
+
+# dark tinted glass
+newmtl Alfa-glass_black
+Ka 0.0050 0.0080 0.0100
+Kd 0.0300 0.0400 0.0450
+Ks 0.4500 0.4500 0.4500
+Ns 415
+d 0.7500
+Tr 0.2500
+illum 4
+
+# red car body paint
+newmtl HONDAbody
+Ka 0.7500 0.0200 0.0150
+Kd 0.9000 0.0800 0.0600
+Ks 0.4500 0.4500 0.4500
+Ns 415
+d 1.0000
+Tr 0.0000
+illum 2
+
+# interior
+newmtl Alfa-inside
+Ka 0.0150 0.0140 0.0130
+Kd 0.0450 0.0400 0.0350
+Ks 0.1800 0.1800 0.1800
+Ns 172
+d 1.0000
+Tr 0.0000
+illum 1
+
+# windows
+newmtl FIAT_WINDOWS
+Ka 0.0300 0.0600 0.0750
+Kd 0.1600 0.2800 0.3400
+Ks 0.7000 0.7000 0.7000
+Ns 640
+d 0.6500
+Tr 0.3500
+illum 4
+
+# rubber
+newmtl Alfa-rubber
+Ka 0.0080 0.0080 0.0070
+Kd 0.0150 0.0150 0.0140
+Ks 0.0800 0.0800 0.0800
+Ns 82
+d 1.0000
+Tr 0.0000
+illum 1
+
+# blue grey glass
+newmtl Alfa-glass
+Ka 0.0400 0.0800 0.1000
+Kd 0.1800 0.3500 0.4200
+Ks 0.7000 0.7000 0.7000
+Ns 640
+d 0.6200
+Tr 0.3800
+illum 4
+
+# mirror
+newmtl Alfa-mirror
+Ka 0.4200 0.4200 0.4000
+Kd 0.7500 0.7500 0.7300
+Ks 0.8500 0.8500 0.8500
+Ns 775
+d 1.0000
+Tr 0.0000
+illum 2
+
+# logo/badge
+newmtl Alfa-logo
+Ka 0.7000 0.6800 0.5000
+Kd 0.9500 0.8800 0.5500
+Ks 0.6500 0.6500 0.6500
+Ns 595
+d 1.0000
+Tr 0.0000
+illum 2
+
+# black grille
+newmtl Alfa-grid
+Ka 0.0100 0.0100 0.0120
+Kd 0.0200 0.0200 0.0240
+Ks 0.1800 0.1800 0.1800
+Ns 172
+d 1.0000
+Tr 0.0000
+illum 1
+
+# license plate
+newmtl Alfa-plate
+Ka 0.8200 0.8200 0.7600
+Kd 0.9200 0.9200 0.8800
+Ks 0.3000 0.3000 0.3000
+Ns 280
+d 1.0000
+Tr 0.0000
+illum 2
+
+# interior
+newmtl FIAT_INTERIOR
+Ka 0.0180 0.0160 0.0140
+Kd 0.0550 0.0500 0.0450
+Ks 0.2000 0.2000 0.2000
+Ns 190
+d 1.0000
+Tr 0.0000
+illum 1
+
+# dark wheel interior
+newmtl Alfa-wheel-inside
+Ka 0.0200 0.0200 0.0200
+Kd 0.0400 0.0400 0.0400
+Ks 0.1000 0.1000 0.1000
+Ns 100
+d 1.0000
+Tr 0.0000
+illum 1
+
+# aluminium wheel
+newmtl Alfa-alu
+Ka 0.3800 0.3800 0.3700
+Kd 0.6500 0.6500 0.6300
+Ks 0.7500 0.7500 0.7500
+Ns 685
+d 1.0000
+Tr 0.0000
+illum 2
+
+# brake disc
+newmtl Alfa-wheel-discs
+Ka 0.2500 0.2500 0.2400
+Kd 0.4500 0.4500 0.4300
+Ks 0.5500 0.5500 0.5500
+Ns 505
+d 1.0000
+Tr 0.0000
+illum 2
+
+# black tire
+newmtl Alfa-tire
+Ka 0.0060 0.0060 0.0060
+Kd 0.0120 0.0120 0.0120
+Ks 0.0500 0.0500 0.0500
+Ns 55
+d 1.0000
+Tr 0.0000
+illum 1
+
+# raised tire tread
+newmtl Alfa-tire-rel
+Ka 0.0120 0.0120 0.0120
+Kd 0.0280 0.0280 0.0280
+Ks 0.0400 0.0400 0.0400
+Ns 46
+d 1.0000
+Tr 0.0000
+illum 1

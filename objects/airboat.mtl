@@ -1,0 +1,61 @@
+# vp.mtl - paleta de cores frias para o OBJ fornecido
+# Compatível com: mtllib ./vp.mtl
+# Materiais encontrados no OBJ: bluteal, black, silver, dkdkgrey, bronze, dkteal, red
+
+newmtl bluteal
+Ka 0.025 0.120 0.150
+Kd 0.040 0.420 0.520
+Ks 0.350 0.650 0.750
+Ns 72.000
+d 1.000
+illum 2
+
+newmtl dkteal
+Ka 0.010 0.075 0.090
+Kd 0.015 0.230 0.280
+Ks 0.220 0.430 0.500
+Ns 58.000
+d 1.000
+illum 2
+
+newmtl silver
+Ka 0.180 0.220 0.250
+Kd 0.560 0.660 0.720
+Ks 0.850 0.930 1.000
+Ns 96.000
+d 1.000
+illum 2
+
+newmtl black
+Ka 0.005 0.007 0.012
+Kd 0.020 0.028 0.045
+Ks 0.120 0.170 0.230
+Ns 42.000
+d 1.000
+illum 2
+
+newmtl dkdkgrey
+Ka 0.020 0.027 0.038
+Kd 0.080 0.105 0.135
+Ks 0.220 0.280 0.340
+Ns 48.000
+d 1.000
+illum 2
+
+newmtl bronze
+# Reinterpretado como azul-petróleo metálico para manter a paleta fria
+Ka 0.025 0.070 0.090
+Kd 0.080 0.300 0.380
+Ks 0.380 0.620 0.700
+Ns 84.000
+d 1.000
+illum 2
+
+newmtl red
+# Reinterpretado como azul-violeta frio para evitar tons quentes
+Ka 0.030 0.020 0.085
+Kd 0.160 0.130 0.520
+Ks 0.460 0.430 0.760
+Ns 66.000
+d 1.000
+illum 2
