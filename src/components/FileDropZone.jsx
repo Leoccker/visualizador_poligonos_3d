@@ -1,8 +1,7 @@
-import React, { useRef } from 'react';
+import React from 'react';
 
 export default function FileDropZone({ onFilesDrop, children }) {
   const [isDragging, setIsDragging] = React.useState(false);
-  const fileInputRef = useRef(null);
 
   const handleDragOver = (e) => {
     e.preventDefault();

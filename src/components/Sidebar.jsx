@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function Sidebar({ viewerState, stats, materialsData }) {
   const eulerColor = stats?.status === 'OK' ? 'var(--success)' : 'var(--warning)';
 

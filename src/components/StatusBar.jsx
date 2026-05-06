@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function StatusBar({ fileName, isLoading, error, viewerState }) {
   return (
     <div className="glass-panel" style={{
