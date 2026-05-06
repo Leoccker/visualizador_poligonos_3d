@@ -212,14 +212,26 @@ class ObjLoader:
             triangle.face_normal = vec_normalize(vec_cross(edge_a, edge_b))
 
     def _compute_euler_stats(self, mesh):
+        vertex_ids_by_position = {}
+
+        def get_unique_vertex_id(vertex_index):
+            vertex = mesh.vertices[vertex_index]
+            position_key = tuple(round(component, 6) for component in vertex)
+            if position_key not in vertex_ids_by_position:
+                vertex_ids_by_position[position_key] = len(vertex_ids_by_position)
+            return vertex_ids_by_position[position_key]
+
         edges = set()
         for triangle in mesh.triangles:
-            a, b, c = triangle.vertex_indices
+            a, b, c = (
+                get_unique_vertex_id(vertex_index)
+                for vertex_index in triangle.vertex_indices
+            )
             edges.add(tuple(sorted((a, b))))
             edges.add(tuple(sorted((b, c))))
             edges.add(tuple(sorted((c, a))))
 
-        vertices = len(mesh.vertices)
+        vertices = len(vertex_ids_by_position)
         edge_count = len(edges)
         faces = len(mesh.triangles)
         euler_value = vertices - edge_count + faces

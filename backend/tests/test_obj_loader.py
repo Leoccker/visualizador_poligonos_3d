@@ -53,6 +53,45 @@ class ObjLoaderTests(unittest.TestCase):
         self.assertEqual(len(mesh.triangles), 1)
         self.assertEqual(mesh.triangles[0].vertex_indices, (0, 1, 2))
 
+    def test_euler_stats_deduplicate_repeated_triangle_vertices_by_position(self):
+        cube_triangles = [
+            ((0, 0, 0), (1, 0, 0), (1, 1, 0)),
+            ((0, 0, 0), (1, 1, 0), (0, 1, 0)),
+            ((0, 0, 1), (1, 1, 1), (1, 0, 1)),
+            ((0, 0, 1), (0, 1, 1), (1, 1, 1)),
+            ((0, 0, 0), (0, 0, 1), (1, 0, 1)),
+            ((0, 0, 0), (1, 0, 1), (1, 0, 0)),
+            ((1, 0, 0), (1, 0, 1), (1, 1, 1)),
+            ((1, 0, 0), (1, 1, 1), (1, 1, 0)),
+            ((1, 1, 0), (1, 1, 1), (0, 1, 1)),
+            ((1, 1, 0), (0, 1, 1), (0, 1, 0)),
+            ((0, 1, 0), (0, 1, 1), (0, 0, 1)),
+            ((0, 1, 0), (0, 0, 1), (0, 0, 0)),
+        ]
+
+        lines = []
+        next_vertex_index = 1
+        for triangle in cube_triangles:
+            face_indices = []
+            for vertex in triangle:
+                lines.append(f"v {vertex[0]} {vertex[1]} {vertex[2]}")
+                face_indices.append(str(next_vertex_index))
+                next_vertex_index += 1
+            lines.append(f"f {' '.join(face_indices)}")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            obj_path = Path(tmpdir) / "non_indexed_cube.obj"
+            obj_path.write_text("\n".join(lines), encoding="utf-8")
+
+            mesh = self.loader.load(obj_path)
+
+        self.assertEqual(len(mesh.vertices), 36)
+        self.assertEqual(mesh.euler_stats["V"], 8)
+        self.assertEqual(mesh.euler_stats["E"], 18)
+        self.assertEqual(mesh.euler_stats["F"], 12)
+        self.assertEqual(mesh.euler_stats["Euler"], 2)
+        self.assertEqual(mesh.euler_stats["status"], "OK")
+
     def test_rejects_out_of_range_positive_face_index(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             obj_path = Path(tmpdir) / "bad_positive.obj"
